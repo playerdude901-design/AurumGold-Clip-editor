@@ -1,5 +1,6 @@
+[README.md](https://github.com/user-attachments/files/27187506/README.md)
 <div align="center">
-  <img src="icono_v2.png" alt="AurumGold Logo" width="200"/>
+  <img src="assets/icono_v2.png" alt="AurumGold Logo" width="200"/>
 
   # AurumGold
   ### Premium Vertical Video Editor for Content Creators
@@ -28,7 +29,7 @@
 ## 📸 Preview
 
 <div align="center">
-  <img src="./aurum_gold_preview_1777429736610.png" alt="AurumGold UI Preview" width="800"/>
+  <img src="assets/preview.png" alt="AurumGold UI Preview" width="800"/>
 </div>
 
 ## 🛠️ Tech Stack
