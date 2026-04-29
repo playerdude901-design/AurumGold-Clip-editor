@@ -51,9 +51,10 @@ class Sidebar {
       x:           Math.round((vw - w) / 2),
       y:           Math.round((vh - h) / 2),
       w, h,
-      lockAR:      false,
+      px: 0, py: 0, pw: 1080, ph: 1920, // Default full-frame (will be scaled)
+      lockAR:      true, // Default to true as per request
       aspectRatio: w / h,
-      weight:      1, // Relative height in the preview stack
+      weight:      1,
       color:       info.hex,
       label:       info.label,
       active:      true
@@ -222,8 +223,29 @@ class Sidebar {
 
   // ── Presets ──────────────────────────────────────────────────────────
   async loadPresets() {
-    const presets = await window.electronAPI.listPresets();
-    this.state.presets = presets;
+    let presets = await window.electronAPI.listPresets();
+    
+    // Add default presets if they don't exist
+    const defaultPresets = [
+      {
+        name: "Default: Overlay 16:9",
+        isDefault: true,
+        cameras: [
+          { label: "Cam 2", x: 656, y: 0, w: 608, h: 1080, aspectRatio: 0.5625, lockAR: true, color: "#4cc9c9", px: 0, py: 0, pw: 1080, ph: 1920 },
+          { label: "Cam 1", x: 0, y: 0, w: 1920, h: 1080, aspectRatio: 1.7777, lockAR: true, color: "#c9a84c", px: 0, py: 420, pw: 1080, ph: 607 }
+        ]
+      },
+      {
+        name: "Default: Split Top/Bottom",
+        isDefault: true,
+        cameras: [
+          { label: "Cam 2", x: 656, y: 0, w: 608, h: 1080, aspectRatio: 0.5625, lockAR: true, color: "#4cc9c9", px: 0, py: 960, pw: 1080, ph: 960 },
+          { label: "Cam 1", x: 0, y: 0, w: 1920, h: 1080, aspectRatio: 1.7777, lockAR: true, color: "#c9a84c", px: 0, py: 0, pw: 1080, ph: 960 }
+        ]
+      }
+    ];
+
+    this.state.presets = [...defaultPresets, ...presets];
     this.renderPresets();
   }
 
@@ -261,11 +283,11 @@ class Sidebar {
     const name = this.elNamingInput.value.trim();
     if (!name) return;
     this.elNamingOverlay.style.display = 'none';
-    const cameras = this.state.cameras.map(({ id, x, y, w, h, lockAR, aspectRatio, color, label }) =>
-      ({ id, x, y, w, h, lockAR, aspectRatio, color, label }));
+    const cameras = this.state.cameras.map(({ id, x, y, w, h, px, py, pw, ph, lockAR, aspectRatio, color, label }) =>
+      ({ id, x, y, w, h, px, py, pw, ph, lockAR, aspectRatio, color, label }));
     const presets = await window.electronAPI.savePreset({ name, cameras });
     this.state.presets = presets;
-    this.renderPresets();
+    this.loadPresets(); // Reload to include defaults
   }
 
   _loadPreset(preset) {
@@ -278,9 +300,13 @@ class Sidebar {
       x: Math.min(c.x, vw - 40),
       y: Math.min(c.y, vh - 40),
       w: Math.min(c.w, vw),
-      h: Math.min(c.h, vh)
+      h: Math.min(c.h, vh),
+      px: c.px ?? 0,
+      py: c.py ?? 0,
+      pw: c.pw ?? 1080,
+      ph: c.ph ?? 1920
     }));
-    this.state.selectedCameraId = this.state.cameras[0]?.id || null;
+    this.state.selectedCameraId = this.state.cameras[this.state.cameras.length - 1]?.id || null;
     EventBus.emit('cameras:changed', this.state.cameras);
     EventBus.emit('camera:selected', this.state.selectedCameraId);
   }

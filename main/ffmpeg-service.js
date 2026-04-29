@@ -66,29 +66,41 @@ class FFmpegService {
   // ── Export ─────────────────────────────────────────────────────────────
   exportVideo(params, onProgress) {
     return new Promise((resolve, reject) => {
-      const { filePath, cameras, trimIn, trimOut, resolution, outputPath, useGPU, hasAudio } = params;
+      const { filePath, cameras, trimIn, trimOut, resolution, outputPath, useGPU, hasAudio, fps } = params;
 
       const [outW, outH] = resolution === '720p' ? [720, 1280] : [1080, 1920];
       const active = cameras.filter(c => c.active);
       const n = active.length;
       if (!n) return reject(new Error('No active cameras'));
 
-      const slotH = Math.floor(outH / n);
-
       // 1. Build Video Filter Complex
-      const videoFilters = active.map((cam, i) => {
-        const h = (i === n - 1) ? (outH - slotH * (n - 1)) : slotH;
+      const videoFilters = [];
+      // Start with a black background with matching FPS
+      videoFilters.push(`color=c=black:s=${outW}x${outH}:d=1:r=${fps || 30}[bg]`);
+
+      active.forEach((cam, i) => {
         const x = Math.max(0, Math.round(cam.x));
         const y = Math.max(0, Math.round(cam.y));
         const w = Math.max(2, Math.round(cam.w));
         const ch = Math.max(2, Math.round(cam.h));
-        return `[0:v]crop=${w}:${ch}:${x}:${y},scale=${outW}:${h}:flags=lanczos[cam${i}]`;
+        
+        // Scale preview coords to actual output resolution
+        const pw = Math.round((cam.pw / 1080) * outW);
+        const ph = Math.round((cam.ph / 1920) * outH);
+
+        videoFilters.push(`[0:v]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos[cam${i}]`);
       });
 
-      const stacks = active.map((_, i) => `[cam${i}]`).join('');
+      let lastInput = '[bg]';
+      active.forEach((cam, i) => {
+        const px = Math.round((cam.px / 1080) * outW);
+        const py = Math.round((cam.py / 1920) * outH);
+        const nextOutput = (i === n - 1) ? '[vout]' : `[v${i}]`;
+        videoFilters.push(`${lastInput}[cam${i}]overlay=${px}:${py}${nextOutput}`);
+        lastInput = `[v${i}]`;
+      });
+
       let filterComplex = videoFilters.join(';');
-      if (n > 1) filterComplex += `;${stacks}vstack=inputs=${n}[vout]`;
-      else filterComplex = filterComplex.replace('[cam0]', '[vout]');
 
       const duration = trimOut - trimIn;
       const ss = Number(trimIn)  || 0;
@@ -103,6 +115,7 @@ class FFmpegService {
         '-pix_fmt yuv420p',
         hasAudio ? '-c:a aac' : null,
         hasAudio ? '-b:a 192k' : null,
+        '-r', String(fps || 30),
         '-movflags +faststart'
       ].filter(Boolean);
 

@@ -362,10 +362,41 @@ body {
 
 .sidebar-footer {
   margin-top: auto;
-  padding: 10px 14px;
+  padding: 16px;
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.version-label { font-size: 10px; color: var(--text-dim); }
+.btn-export-large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--accent), #ff8c00);
+  border: none;
+  border-radius: var(--radius);
+  color: #000;
+  font-weight: 800;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 100%;
+}
+.btn-export-large:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 140, 0, 0.3);
+  filter: brightness(1.1);
+}
+.btn-export-large:active:not(:disabled) { transform: translateY(0); }
+.btn-export-large:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); box-shadow: none; }
+
+.version-label { font-size: 10px; color: var(--text-dim); text-align: center; }
 
 /* ── Canvas Area ───────────────────────────────────────────────────────── */
 .canvas-area {
@@ -418,6 +449,19 @@ body {
   font-weight: 700;
 }
 .canvas-sublabel { font-size: 10px; color: var(--text-dim); }
+
+.canvas-meta-badge {
+  font-size: 10px;
+  color: var(--text-dim);
+  background: var(--bg-card);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
 
 .canvas-wrapper {
   flex: 1;
@@ -519,8 +563,9 @@ body {
   display: flex;
   align-items: center;
   gap: 3px;
-  min-width: 130px;
+  min-width: 150px;
 }
+.tl-time-main { display: flex; align-items: center; gap: 3px; }
 .tl-sep { color: var(--text-dim); }
 
 .tl-track-area { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
@@ -532,7 +577,38 @@ body {
   border-radius: var(--radius-sm);
   position: relative;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.tl-time-start, .tl-time-end {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  padding: 1px 4px;
+}
+
+.tl-ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tl-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255,255,255,0.05);
+}
+.tl-tick-label {
+  position: absolute;
+  top: 18px;
+  left: 3px;
+  font-size: 8px;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .tl-waveform {

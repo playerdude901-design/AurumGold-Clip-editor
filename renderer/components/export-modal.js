@@ -99,6 +99,7 @@ class ExportModal {
       outputPath,
       useGPU:        true,
       hasAudio:      this.state.hasAudio,
+      fps:           this.state.videoFps || 30,
       audioTracks:   this.state.audioTracks,
       audioStrategy: this.audioStrategy
     });

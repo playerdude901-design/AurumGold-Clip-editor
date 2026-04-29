@@ -25,6 +25,9 @@ class Timeline {
     this.elZoom     = document.getElementById('tl-zoom');
     this.elInner    = document.getElementById('tl-inner');
     this.elScroll   = document.getElementById('tl-scroll');
+    this.elTicks    = document.getElementById('tl-ticks');
+    this.elTStart   = document.getElementById('tl-time-start');
+    this.elTEnd     = document.getElementById('tl-time-end');
 
     this._dragging  = null; // 'playhead' | 'trim-in' | 'trim-out'
     this.zoomLevel  = 1.0;
@@ -37,7 +40,9 @@ class Timeline {
     state.trimIn  = 0;
     state.trimOut = state.videoDuration;
     this.elDuration.textContent = formatTime(state.videoDuration);
+    this.elTEnd.textContent     = formatTime(state.videoDuration);
     this.elOutLabel.textContent = `Out: ${formatTime(state.videoDuration)}`;
+    this._renderTicks();
     this._update();
   }
 
@@ -81,6 +86,13 @@ class Timeline {
     const playing = state.videoEl && !state.videoEl.paused;
     this.iconPlay.style.display  = playing ? 'none' : 'block';
     this.iconPause.style.display = playing ? 'block' : 'none';
+
+    // Sync mute icon
+    const muted = state.videoEl && state.videoEl.muted;
+    this.elMute.style.color = muted ? '#f55' : 'var(--text-muted)';
+    this.elMute.innerHTML = muted ? 
+      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2V15H6L11 19V5Z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>` :
+      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>`;
   }
 
   // ── Bind all events ──────────────────────────────────────────────────
@@ -102,6 +114,7 @@ class Timeline {
     // Zoom slider
     this.elZoom.addEventListener('input', () => {
       this.zoomLevel = parseFloat(this.elZoom.value);
+      this._renderTicks();
       this._update();
     });
 
@@ -133,8 +146,12 @@ class Timeline {
     window.addEventListener('mouseup',   () => { this._dragging = null; });
 
     // Video time update
-    EventBus.on('video:loaded', () => this.init());
+    EventBus.on('video:loaded', () => {
+      this.init();
+      this._renderTicks();
+    });
     EventBus.on('video:timeupdate', () => this._update());
+    window.addEventListener('resize', () => this._renderTicks());
   }
 
   _togglePlay() {
@@ -184,5 +201,38 @@ class Timeline {
     const t    = pct * this.state.videoDuration;
     if (this.state.videoEl) this.state.videoEl.currentTime = t;
     this._update();
+  }
+
+  _renderTicks() {
+    const dur = this.state.videoDuration;
+    if (!dur) return;
+
+    this.elTicks.innerHTML = '';
+    const width = this.elInner.clientWidth;
+    const pxPerSec = (width / dur);
+    
+    // Determine interval based on zoom
+    let interval = 1; // 1 second
+    if (pxPerSec < 2) interval = 60;
+    if (pxPerSec < 10) interval = 10;
+    if (pxPerSec > 100) interval = 0.5;
+    if (pxPerSec > 500) interval = 0.1;
+
+    for (let t = 0; t <= dur; t += interval) {
+      const pct = t / dur;
+      const tick = document.createElement('div');
+      tick.className = 'tl-tick';
+      tick.style.left = (pct * 100) + '%';
+      
+      // Only add labels at certain intervals
+      if (t % (interval * 5) === 0 || interval < 1) {
+        const label = document.createElement('span');
+        label.className = 'tl-tick-label';
+        label.textContent = formatTime(t, false);
+        tick.appendChild(label);
+      }
+      
+      this.elTicks.appendChild(tick);
+    }
   }
 }
