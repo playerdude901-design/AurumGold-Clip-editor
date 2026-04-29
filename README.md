@@ -1,1 +1,0 @@
-# AurumGold-Clip-editor
