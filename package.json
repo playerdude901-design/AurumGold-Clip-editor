@@ -22,7 +22,7 @@
   "build": {
     "appId": "com.aurumgold.editor",
     "productName": "AurumGold",
-    "copyright": "Copyright © 2026 Nexus Studios",
+    "copyright": "Copyright 2026 Nexus Studios",
     "publish": {
       "provider": "github",
       "owner": "playerdude901-design",
@@ -38,7 +38,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/icono_v2.ico",
+      "icon": "assets/icono_v2.png",
       "artifactName": "${productName}_Setup_${version}.${ext}"
     },
     "nsis": {
