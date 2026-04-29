@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./aurum_gold_logo_1777429701889.png" alt="AurumGold Logo" width="200"/>
+  <img src="E:\Readme\icono_v2.png" alt="AurumGold Logo" width="200"/>
 
   # AurumGold
   ### Premium Vertical Video Editor for Content Creators
