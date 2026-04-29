@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/27187506/README.md)
+[README.md](https://github.com/user-attachments/files/27187632/README.md)
 <div align="center">
   <img src="assets/icono_v2.png" alt="AurumGold Logo" width="200"/>
 
