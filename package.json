@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder --win"
+    "build": "electron-builder --win",
+    "release": "electron-builder --win --publish always"
   },
   "dependencies": {
     "electron-updater": "^6.8.3",
@@ -22,6 +23,11 @@
     "appId": "com.aurumgold.editor",
     "productName": "AurumGold",
     "copyright": "Copyright © 2026 Nexus Studios",
+    "publish": {
+      "provider": "github",
+      "owner": "playerdude901-design",
+      "repo": "AurumGold-Clip-editor"
+    },
     "directories": {
       "output": "dist"
     },
