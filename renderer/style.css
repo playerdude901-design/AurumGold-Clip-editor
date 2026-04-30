@@ -863,3 +863,41 @@ body {
   display: flex; align-items: center; justify-content: center;
   color: #4caf50; font-weight: 700; font-size: 14px;
 }
+
+/* ── Twitch Downloader ─────────────────────────────────────────────────── */
+.twitch-clip-card {
+  display: flex;
+  gap: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  margin-bottom: 4px;
+}
+.twitch-clip-card img {
+  width: 100px;
+  height: 56px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #000;
+}
+.twitch-clip-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.twitch-clip-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.twitch-clip-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}

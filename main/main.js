@@ -38,13 +38,16 @@ function createWindow() {
   });
 }
 
+// Auto-update configuration
+autoUpdater.autoDownload = false;
+
 app.whenReady().then(() => {
   createWindow();
   require('./ipc-handlers').register(mainWindow);
 
   // Check for updates (only in production)
   if (!isDev) {
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.checkForUpdates();
   }
 
   app.on('activate', () => {
@@ -53,19 +56,32 @@ app.whenReady().then(() => {
 });
 
 // Auto-update events
-autoUpdater.on('update-available', () => {
-  console.log('Update available.');
+autoUpdater.on('update-available', (info) => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Actualización disponible',
+    message: `Una nueva versión (${info.version}) está disponible. ¿Deseas descargarla ahora?`,
+    buttons: ['Descargar e instalar', 'Más tarde']
+  }).then((result) => {
+    if (result.response === 0) {
+      autoUpdater.downloadUpdate();
+    }
+  });
 });
 
 autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
     type: 'info',
     title: 'Actualización lista',
-    message: 'Hay una nueva versión de AurumGold lista para instalar. ¿Quieres reiniciar ahora?',
+    message: 'La actualización ha sido descargada. ¿Quieres reiniciar AurumGold para aplicar los cambios?',
     buttons: ['Reiniciar y actualizar', 'Más tarde']
   }).then((result) => {
     if (result.response === 0) autoUpdater.quitAndInstall();
   });
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('Auto-updater error:', err);
 });
 
 app.on('window-all-closed', () => {

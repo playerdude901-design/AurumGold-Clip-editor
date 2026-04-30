@@ -61,6 +61,25 @@ function register(mainWindow) {
 
   ipcMain.handle('shell:openFolder', (_, folderPath) => shell.openPath(folderPath));
   ipcMain.handle('app:version', () => app.getVersion());
+
+  // ── Twitch ───────────────────────────────────────────────────────────────
+  const TwitchService = require('./twitch-service');
+  const twitchService = new TwitchService();
+  const path = require('path');
+
+  ipcMain.handle('twitch:getInfo', async (_, url) => {
+    const slug = twitchService.extractSlug(url);
+    if (!slug) throw new Error('Invalid Twitch URL');
+    return await twitchService.getClipInfo(slug);
+  });
+
+  ipcMain.handle('twitch:download', async (event, { url, folder, filename }) => {
+    const destPath = path.join(folder, filename);
+    await twitchService.downloadClip(url, destPath, (pct) => {
+      mainWindow.webContents.send('twitch:progress', { percent: pct });
+    });
+    return destPath;
+  });
 }
 
 module.exports = { register };
