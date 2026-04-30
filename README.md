@@ -24,9 +24,9 @@
 - **🚀 GPU Accelerated Export**: Powered by FFmpeg for high-quality, fast video processing.
 - **🎨 Premium Interface**: A sleek, dark-themed UI (#1b1b1b) with luxurious gold accents designed for focus and aesthetic pleasure.
 - **🔄 Auto-Updates**: Stay up to date with the latest features and fixes automatically.
-- **▶️ New Button Export: We change the position of the button export to find it more easly
-- **🕞 Timeline Navigation: We have moved the start and end time counters from the top of the timeline track to the bottom bar (alongside the In/Out points).
-- **📽️ Source Video Metadata: The video information (resolution, FPS, duration) has been moved from the toolbar to a new, dedicated badge next to the Source label in the canvas area. This keeps the technical details grouped with the video source itself.
+- **▶️ New Button Export: We change the position of the button export to find it more easly-**
+- **🕞 Timeline Navigation: We have moved the start and end time counters from the top of the timeline track to the bottom bar (alongside the In/Out points).-**
+- **📽️ Source Video Metadata: The video information (resolution, FPS, duration) has been moved from the toolbar to a new, dedicated badge next to the Source label in the canvas area. This keeps the technical details grouped with the video source itself.-**
 - **🖼️ We have updated the dragging and resizing logic in the preview canvas. Cameras are now strictly constrained within the 1080x1920 preview area, preventing them from being dragged or resized outside the visible canvas.
 -**
 -**🔗 Direct Link Integration: A new "Twitch Clip" button in the toolbar allows you to paste any Twitch clip URL.-**
