@@ -24,5 +24,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Utilities
   selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
   openFolder:   (p) => ipcRenderer.invoke('shell:openFolder', p),
-  getVersion:   () => ipcRenderer.invoke('app:version')
+  getVersion:   () => ipcRenderer.invoke('app:version'),
+  
+  // Twitch
+  twitchGetInfo: (url) => ipcRenderer.invoke('twitch:getInfo', url),
+  twitchDownload: (params) => ipcRenderer.invoke('twitch:download', params),
+  onTwitchProgress: (cb) => ipcRenderer.on('twitch:progress', (_, d) => cb(d))
 });

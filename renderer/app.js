@@ -36,6 +36,7 @@
   const timeline      = new Timeline(state);
   const sidebar       = new Sidebar(state);
   const exportModal   = new ExportModal(state);
+  const twitchModal   = new TwitchModal(state);
 
   // ── Canvas sizing ──────────────────────────────────────────────────
   function resizeCanvases() {
@@ -67,8 +68,8 @@
   previewCanvas.start();
 
   // ── Video load ─────────────────────────────────────────────────────
-  async function openVideo() {
-    const result = await window.electronAPI.openVideo();
+  async function openVideo(path) {
+    const result = await window.electronAPI.openVideo(path);
 
     if (!result || result.error) {
       if (result?.error) alert(`Could not open video: ${result.error}`);
@@ -128,6 +129,11 @@
   // Keyboard shortcut Ctrl+O
   window.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 'o') { e.preventDefault(); openVideo(); }
+  });
+
+  // Listen for Twitch downloads
+  EventBus.on('twitch:download-complete', (filePath) => {
+    openVideo(filePath);
   });
 
   // ── App version ────────────────────────────────────────────────────

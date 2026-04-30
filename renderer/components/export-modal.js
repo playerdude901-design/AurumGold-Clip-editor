@@ -24,6 +24,7 @@ class ExportModal {
     this.elDone        = document.getElementById('export-done');
     this.elDoneMsg     = document.getElementById('export-done-msg');
     this.elOpenFolder  = document.getElementById('btn-open-folder');
+    this.elFilename    = document.getElementById('export-filename');
 
     this._bindEvents();
   }
@@ -35,6 +36,15 @@ class ExportModal {
       this.state.trimIn === 0 && this.state.trimOut === this.state.videoDuration
         ? `Full video — ${formatTime(this.state.videoDuration)}`
         : `${formatTime(this.state.trimIn)} → ${formatTime(this.state.trimOut)}  (${formatTime(trimDur)})`;
+
+    // Set default filename
+    let baseName = 'Clip';
+    if (this.state.filePath) {
+      const parts = this.state.filePath.split(/[\\/]/);
+      baseName = parts[parts.length - 1].replace(/\.[^/.]+$/, "");
+    }
+    this.elFilename.value = `AurumGold_${baseName}`;
+
     this.elOverlay.style.display = 'flex';
   }
 
@@ -58,7 +68,9 @@ class ExportModal {
     if (!this.outputFolder) { alert('Please select an output folder.'); return; }
     if (!this.state.cameras.filter(c => c.active).length) { alert('No cameras defined.'); return; }
 
-    const fileName = `nexus_export_${Date.now()}.mp4`;
+    let fileName = (this.elFilename.value || 'AurumGold_Clip').trim();
+    if (!fileName.toLowerCase().endsWith('.mp4')) fileName += '.mp4';
+    
     const outputPath = this.outputFolder.replace(/\\/g, '/') + '/' + fileName;
 
     this.exporting = true;
