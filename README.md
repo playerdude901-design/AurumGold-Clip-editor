@@ -37,7 +37,7 @@
 
 <div align="center">
 
-  ![AurumGold UI Preview](./assets/preview.png)
+  ![AurumGold UI Preview](./assets/preview_3.png)
 
 </div>
 
