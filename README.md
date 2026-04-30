@@ -4,7 +4,7 @@
   # AurumGold
   ### Premium Vertical Video Editor for Content Creators
 
-  [![Version](https://img.shields.io/badge/version-1.0.1-gold.svg?style=for-the-badge&labelColor=1b1b1b)](https://github.com/playerdude901-design/AurumGold-Clip-editor)
+  [![Version](https://img.shields.io/badge/version-1.0.2-gold.svg?style=for-the-badge&labelColor=1b1b1b)](https://github.com/playerdude901-design/AurumGold-Clip-editor)
   [![Platform](https://img.shields.io/badge/platform-windows-gold.svg?style=for-the-badge&labelColor=1b1b1b)](https://github.com/playerdude901-design/AurumGold-Clip-editor)
   [![License](https://img.shields.io/badge/license-MIT-gold.svg?style=for-the-badge&labelColor=1b1b1b)](LICENSE)
 
@@ -28,6 +28,10 @@
 - **🕞 Timeline Navigation: We have moved the start and end time counters from the top of the timeline track to the bottom bar (alongside the In/Out points).
 - **📽️ Source Video Metadata: The video information (resolution, FPS, duration) has been moved from the toolbar to a new, dedicated badge next to the Source label in the canvas area. This keeps the technical details grouped with the video source itself.
 - **🖼️ We have updated the dragging and resizing logic in the preview canvas. Cameras are now strictly constrained within the 1080x1920 preview area, preventing them from being dragged or resized outside the visible canvas.
+-**
+-**🔗 Direct Link Integration: A new "Twitch Clip" button in the toolbar allows you to paste any Twitch clip URL.-**
+-**✅ Custom Filenaming: You can now specify a custom name for your exported clip before starting the process.-**
+-**🔛 User Confirmation Flow: Disabled automatic background downloads. The app now notifies you when a new version is available and asks for explicit permission before downloading and installing.-**
 
 ## 📸 Preview
 
