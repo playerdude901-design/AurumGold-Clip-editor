@@ -20,6 +20,24 @@
     presets:           []
   };
 
+  // ── Persistence ────────────────────────────────────────────────────
+  async function autoSave() {
+    if (!state.filePath) return;
+    const session = {
+      filePath: state.filePath,
+      trimIn:   state.trimIn,
+      trimOut:  state.trimOut,
+      cameras:  state.cameras.map(c => ({ ...c }))
+    };
+    await window.electronAPI.saveSession(session);
+  }
+
+  EventBus.on('project:changed', () => autoSave());
+  EventBus.on('video:loaded',    () => autoSave());
+  EventBus.on('cameras:changed', () => EventBus.emit('project:changed'));
+  // We don't save on every timeupdate, but maybe on trim change
+  // For now, components will emit project:changed when relevant.
+
   // ── Canvas elements ────────────────────────────────────────────────
   const srcCanvasEl  = document.getElementById('source-canvas');
   const prvCanvasEl  = document.getElementById('preview-canvas');
@@ -37,6 +55,24 @@
   const sidebar       = new Sidebar(state);
   const exportModal   = new ExportModal(state);
   const twitchModal   = new TwitchModal(state);
+
+  // ── i18n Initialization ─────────────────────────────────────────────
+  const btnEn = document.getElementById('btn-lang-en');
+  const btnEs = document.getElementById('btn-lang-es');
+
+  function updateLangUI(lang) {
+    btnEn.classList.toggle('active', lang === 'en');
+    btnEs.classList.toggle('active', lang === 'es');
+  }
+
+  btnEn.addEventListener('click', () => { window.i18n.setLocale('en'); updateLangUI('en'); });
+  btnEs.addEventListener('click', () => { window.i18n.setLocale('es'); updateLangUI('es'); });
+
+  // Load saved settings
+  const settings = await window.electronAPI.getSettings();
+  const lang = settings.language || 'en';
+  await window.i18n.setLocale(lang);
+  updateLangUI(lang);
 
   // ── Canvas sizing ──────────────────────────────────────────────────
   function resizeCanvases() {
@@ -139,7 +175,28 @@
   // ── App version ────────────────────────────────────────────────────
   try {
     const ver = await window.electronAPI.getVersion();
-    document.getElementById('app-version').textContent = `v${ver}`;
+    document.getElementById('app-version').textContent = `v1.0.3`; // Updated version
   } catch (_) {}
+
+  // ── Session Restore ────────────────────────────────────────────────
+  const lastSession = await window.electronAPI.getSession();
+  if (lastSession && lastSession.filePath) {
+    try {
+      await openVideo(lastSession.filePath);
+      state.trimIn  = lastSession.trimIn  || 0;
+      state.trimOut = lastSession.trimOut || state.videoDuration;
+      state.cameras = lastSession.cameras || [];
+      
+      // Update UI
+      if (state.cameras.length > 0) {
+        state.selectedCameraId = state.cameras[0].id;
+      }
+      sidebar.render();
+      EventBus.emit('video:timeupdate'); // Refresh timeline UI
+    } catch (e) {
+      console.warn('Failed to restore session:', e);
+      window.electronAPI.clearSession();
+    }
+  }
 
 })();

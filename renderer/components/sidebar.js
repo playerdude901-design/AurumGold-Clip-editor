@@ -18,10 +18,10 @@ class Sidebar {
     this.elNamingCancel  = document.getElementById('btn-naming-cancel');
 
     this.CAM_COLORS = [
-      { hex: '#c9a84c', label: 'Camera 1' },
-      { hex: '#4cc9c9', label: 'Camera 2' },
-      { hex: '#c94c7c', label: 'Camera 3' },
-      { hex: '#7c4cc9', label: 'Camera 4' }
+      { hex: '#c9a84c', key: 'camera_1' },
+      { hex: '#4cc9c9', key: 'camera_2' },
+      { hex: '#c94c7c', key: 'camera_3' },
+      { hex: '#7c4cc9', key: 'camera_4' }
     ];
 
     this._bindEvents();
@@ -56,7 +56,7 @@ class Sidebar {
       aspectRatio: w / h,
       weight:      1,
       color:       info.hex,
-      label:       info.label,
+      label:       window.i18n.t(info.key),
       active:      true
     };
     this.state.cameras.push(cam);
@@ -113,8 +113,8 @@ class Sidebar {
           <div class="cam-dot"></div>
           <span class="cam-label">${cam.label}</span>
           <div class="cam-actions">
-            <button class="btn-tiny" data-action="up" data-id="${cam.id}" ${idx === 0 ? 'disabled' : ''} title="Move Up">▲</button>
-            <button class="btn-tiny" data-action="down" data-id="${cam.id}" ${idx === this.state.cameras.length - 1 ? 'disabled' : ''} title="Move Down">▼</button>
+            <button class="btn-tiny" data-action="up" data-id="${cam.id}" ${idx === 0 ? 'disabled' : ''} title="${window.i18n.t('move_up')}">▲</button>
+            <button class="btn-tiny" data-action="down" data-id="${cam.id}" ${idx === this.state.cameras.length - 1 ? 'disabled' : ''} title="${window.i18n.t('move_down')}">▼</button>
           </div>
         </div>
         <div class="cam-coords">

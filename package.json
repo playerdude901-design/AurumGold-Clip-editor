@@ -1,6 +1,6 @@
 {
   "name": "aurum-gold",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Premium vertical video editor for content creators",
   "main": "main/main.js",
   "scripts": {

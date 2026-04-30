@@ -128,11 +128,13 @@ class Timeline {
         this.state.trimIn = this.state.videoEl.currentTime;
         if (this.state.trimIn > this.state.trimOut - 0.1) this.state.trimOut = Math.min(this.state.videoDuration, this.state.trimIn + 0.1);
         this._update();
+        EventBus.emit('project:changed');
       }
       if (e.key.toLowerCase() === 'o') {
         this.state.trimOut = this.state.videoEl.currentTime;
         if (this.state.trimOut < this.state.trimIn + 0.1) this.state.trimIn = Math.max(0, this.state.trimOut - 0.1);
         this._update();
+        EventBus.emit('project:changed');
       }
     });
 
@@ -152,6 +154,23 @@ class Timeline {
     });
     EventBus.on('video:timeupdate', () => this._update());
     window.addEventListener('resize', () => this._renderTicks());
+
+    // Timeline shortcuts: Ctrl+Scroll (Move), Alt+Scroll (Zoom)
+    this.elScroll.addEventListener('wheel', e => {
+      if (e.ctrlKey) {
+        // Horizontal Scroll
+        e.preventDefault();
+        this.elScroll.scrollLeft += e.deltaY;
+      } else if (e.altKey) {
+        // Zoom
+        e.preventDefault();
+        const delta = -e.deltaY / 500; // Adjusted sensitivity
+        this.zoomLevel = Math.max(1.0, Math.min(10.0, this.zoomLevel + delta));
+        this.elZoom.value = this.zoomLevel;
+        this._renderTicks();
+        this._update();
+      }
+    }, { passive: false });
   }
 
   _togglePlay() {
@@ -193,6 +212,7 @@ class Timeline {
       this.state.trimOut = Math.min(this.state.videoDuration, Math.max(t, this.state.trimIn + 0.5));
     }
     this._update();
+    EventBus.emit('project:changed');
   }
 
   _seekToEvent(e) {

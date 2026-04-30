@@ -29,5 +29,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Twitch
   twitchGetInfo: (url) => ipcRenderer.invoke('twitch:getInfo', url),
   twitchDownload: (params) => ipcRenderer.invoke('twitch:download', params),
-  onTwitchProgress: (cb) => ipcRenderer.on('twitch:progress', (_, d) => cb(d))
+  onTwitchProgress: (cb) => ipcRenderer.on('twitch:progress', (_, d) => cb(d)),
+
+  // Settings & Session
+  getSettings:  ()         => ipcRenderer.invoke('settings:get'),
+  saveSettings: (s)        => ipcRenderer.invoke('settings:save', s),
+  getSession:   ()         => ipcRenderer.invoke('session:get'),
+  saveSession:  (s)        => ipcRenderer.invoke('session:save', s),
+  clearSession: ()         => ipcRenderer.invoke('session:clear')
 });

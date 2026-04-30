@@ -25,6 +25,7 @@ class FFmpegService {
     this.currentCmd = null; 
     this.tempDir = path.join(os.tmpdir(), 'nexus-audio');
     if (!fs.existsSync(this.tempDir)) fs.mkdirSync(this.tempDir, { recursive: true });
+    this.cleanup();
   }
 
   // Cleanup temp files

@@ -1,9 +1,11 @@
 const { ipcMain, dialog, shell, app } = require('electron');
 const FFmpegService = require('./ffmpeg-service');
 const PresetsStore  = require('./presets-store');
+const SettingsStore = require('./settings-store');
 
 const ffmpegService = new FFmpegService();
 const presetsStore  = new PresetsStore();
+const settingsStore = new SettingsStore();
 
 function register(mainWindow) {
   // ── Open video ──────────────────────────────────────────────────────────
@@ -61,6 +63,13 @@ function register(mainWindow) {
 
   ipcMain.handle('shell:openFolder', (_, folderPath) => shell.openPath(folderPath));
   ipcMain.handle('app:version', () => app.getVersion());
+
+  // ── Settings & Session ──────────────────────────────────────────────────
+  ipcMain.handle('settings:get',  () => settingsStore.getSettings());
+  ipcMain.handle('settings:save', (_, settings) => settingsStore.saveSettings(settings));
+  ipcMain.handle('session:get',   () => settingsStore.getSession());
+  ipcMain.handle('session:save',  (_, session) => settingsStore.saveSession(session));
+  ipcMain.handle('session:clear', () => settingsStore.clearSession());
 
   // ── Twitch ───────────────────────────────────────────────────────────────
   const TwitchService = require('./twitch-service');
