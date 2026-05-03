@@ -89,6 +89,24 @@ function register(mainWindow) {
     });
     return destPath;
   });
+
+  // ── Kick ─────────────────────────────────────────────────────────────────
+  const KickService = require('./kick-service');
+  const kickService = new KickService();
+
+  ipcMain.handle('kick:getInfo', async (_, url) => {
+    const slug = kickService.extractSlug(url);
+    if (!slug) throw new Error('Invalid Kick URL');
+    return await kickService.getClipInfo(slug);
+  });
+
+  ipcMain.handle('kick:download', async (event, { url, folder, filename }) => {
+    const destPath = path.join(folder, filename);
+    await kickService.downloadClip(url, destPath, (pct) => {
+      mainWindow.webContents.send('kick:progress', { percent: pct });
+    });
+    return destPath;
+  });
 }
 
 module.exports = { register };

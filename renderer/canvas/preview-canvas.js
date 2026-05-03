@@ -174,7 +174,14 @@ class PreviewCanvas {
       const dw = (cam.pw / 1080) * W;
       const dh = (cam.ph / 1920) * H;
 
+      ctx.save();
+      if (cam.shape === 'circle') {
+        ctx.beginPath();
+        ctx.ellipse(dx + dw / 2, dy + dh / 2, dw / 2, dh / 2, 0, 0, Math.PI * 2);
+        ctx.clip();
+      }
       ctx.drawImage(state.videoEl, sx, sy, sw, sh, dx, dy, dw, dh);
+      ctx.restore();
 
       // Selected highlight & handles
       if (cam.id === state.selectedCameraId) {

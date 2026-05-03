@@ -175,7 +175,7 @@
   // ── App version ────────────────────────────────────────────────────
   try {
     const ver = await window.electronAPI.getVersion();
-    document.getElementById('app-version').textContent = `v1.0.3`; // Updated version
+    document.getElementById('app-version').textContent = `v1.0.4`; 
   } catch (_) {}
 
   // ── Session Restore ────────────────────────────────────────────────

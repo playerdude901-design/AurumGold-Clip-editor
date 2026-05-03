@@ -71,7 +71,14 @@ class SourceCanvas {
       ctx.strokeStyle = cam.color;
       ctx.lineWidth   = isSelected ? 2.5 : 1.5;
       ctx.globalAlpha = isSelected || isHovered ? 1 : 0.6;
-      ctx.strokeRect(x, y, w, h);
+      
+      if (cam.shape === 'circle') {
+        ctx.beginPath();
+        ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(x, y, w, h);
+      }
 
       // Corner label
       ctx.globalAlpha = 1;

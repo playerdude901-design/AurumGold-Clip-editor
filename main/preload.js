@@ -31,6 +31,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   twitchDownload: (params) => ipcRenderer.invoke('twitch:download', params),
   onTwitchProgress: (cb) => ipcRenderer.on('twitch:progress', (_, d) => cb(d)),
 
+  // Kick
+  kickGetInfo: (url) => ipcRenderer.invoke('kick:getInfo', url),
+  kickDownload: (params) => ipcRenderer.invoke('kick:download', params),
+  onKickProgress: (cb) => ipcRenderer.on('kick:progress', (_, d) => cb(d)),
+
   // Settings & Session
   getSettings:  ()         => ipcRenderer.invoke('settings:get'),
   saveSettings: (s)        => ipcRenderer.invoke('settings:save', s),

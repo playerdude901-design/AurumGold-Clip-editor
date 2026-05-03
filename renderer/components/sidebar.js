@@ -57,6 +57,7 @@ class Sidebar {
       weight:      1,
       color:       info.hex,
       label:       window.i18n.t(info.key),
+      shape:       'rect', // New property
       active:      true
     };
     this.state.cameras.push(cam);
@@ -107,15 +108,12 @@ class Sidebar {
       const isSelected = cam.id === this.state.selectedCameraId;
       const card = document.createElement('div');
       card.className = `camera-card${isSelected ? ' selected' : ''}`;
+      card.draggable = true;
       card.style.setProperty('--cam-color', cam.color);
       card.innerHTML = `
         <div class="cam-header">
           <div class="cam-dot"></div>
           <span class="cam-label">${cam.label}</span>
-          <div class="cam-actions">
-            <button class="btn-tiny" data-action="up" data-id="${cam.id}" ${idx === 0 ? 'disabled' : ''} title="${window.i18n.t('move_up')}">▲</button>
-            <button class="btn-tiny" data-action="down" data-id="${cam.id}" ${idx === this.state.cameras.length - 1 ? 'disabled' : ''} title="${window.i18n.t('move_down')}">▼</button>
-          </div>
         </div>
         <div class="cam-coords">
           <div class="cam-input-group">
@@ -146,10 +144,52 @@ class Sidebar {
         </div>
       `;
 
-      // Select on click
+      // Drag and drop events
+      card.addEventListener('dragstart', e => {
+        this._isDragging = true;
+        card.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', idx);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      card.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        card.classList.add('drag-over');
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('drag-over');
+      });
+
+      card.addEventListener('drop', e => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+        const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        const toIdx = idx;
+        if (fromIdx === toIdx) return;
+        
+        const [movedCam] = this.state.cameras.splice(fromIdx, 1);
+        this.state.cameras.splice(toIdx, 0, movedCam);
+        EventBus.emit('cameras:changed', this.state.cameras);
+        this.renderCameras();
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        // Use timeout so click event (which fires after dragend) sees the flag
+        setTimeout(() => { this._isDragging = false; }, 0);
+      });
+
+      // Select/deselect on click (but not when drag just ended)
       card.addEventListener('click', () => {
-        this.state.selectedCameraId = cam.id;
-        EventBus.emit('camera:selected', cam.id);
+        if (this._isDragging) return;
+        if (this.state.selectedCameraId === cam.id) {
+          this.state.selectedCameraId = null;
+        } else {
+          this.state.selectedCameraId = cam.id;
+        }
+        EventBus.emit('camera:selected', this.state.selectedCameraId);
         this.renderCameras();
       });
 
@@ -191,14 +231,7 @@ class Sidebar {
         input.addEventListener('click', e => e.stopPropagation());
       });
 
-      // Reorder buttons
-      card.querySelectorAll('.btn-tiny').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          const action = btn.dataset.action;
-          this.moveCamera(cam.id, action === 'up' ? -1 : 1);
-        });
-      });
+
 
       // Preset buttons
       card.querySelectorAll('.btn-preset').forEach(btn => {
@@ -304,7 +337,8 @@ class Sidebar {
       px: c.px ?? 0,
       py: c.py ?? 0,
       pw: c.pw ?? 1080,
-      ph: c.ph ?? 1920
+      ph: c.ph ?? 1920,
+      shape: c.shape ?? 'rect'
     }));
     this.state.selectedCameraId = this.state.cameras[this.state.cameras.length - 1]?.id || null;
     EventBus.emit('cameras:changed', this.state.cameras);
@@ -336,13 +370,25 @@ class Sidebar {
     this.elARPresets.addEventListener('change', () => {
       const c = this.state.cameras.find(c => c.id === this.state.selectedCameraId);
       if (c && this.elARPresets.value) {
-        const ratio = parseFloat(this.elARPresets.value);
-        c.aspectRatio = ratio;
-        // If locked, we should apply the ratio to dimensions
-        if (c.lockAR) {
-          const vh = this.state.videoHeight || 1080;
-          c.h = Math.max(40, Math.min(vh - c.y, c.w / c.aspectRatio));
-          c.w = c.h * c.aspectRatio;
+        if (this.elARPresets.value === 'circle') {
+          c.shape = 'circle';
+          // If locked, circle should be 1:1
+          if (c.lockAR) {
+            c.aspectRatio = 1;
+            const vh = this.state.videoHeight || 1080;
+            c.h = Math.max(40, Math.min(vh - c.y, c.w / c.aspectRatio));
+            c.w = c.h * c.aspectRatio;
+          }
+        } else {
+          c.shape = 'rect';
+          const ratio = parseFloat(this.elARPresets.value);
+          c.aspectRatio = ratio;
+          // If locked, we should apply the ratio to dimensions
+          if (c.lockAR) {
+            const vh = this.state.videoHeight || 1080;
+            c.h = Math.max(40, Math.min(vh - c.y, c.w / c.aspectRatio));
+            c.w = c.h * c.aspectRatio;
+          }
         }
         EventBus.emit('cameras:changed', this.state.cameras);
         this.renderCameras();

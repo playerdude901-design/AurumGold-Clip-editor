@@ -128,6 +128,9 @@ class TwitchService {
 
         file.on('finish', () => {
           file.close();
+        });
+
+        file.on('close', () => {
           resolve(destPath);
         });
       }).on('error', (err) => {

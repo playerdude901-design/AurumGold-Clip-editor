@@ -34,9 +34,21 @@ class TwitchModal {
     this._bindEvents();
   }
 
-  open() {
+  open(service = 'twitch') {
+    this.currentService = service;
     this._reset();
+    this._updateModalUI();
     this.elOverlay.style.display = 'flex';
+  }
+
+  _updateModalUI() {
+    const isKick = this.currentService === 'kick';
+    const title = document.querySelector('#twitch-modal .modal-title');
+    const urlLabel = document.querySelector('#twitch-modal .form-label');
+    
+    if (title) title.textContent = isKick ? 'Kick Clip Downloader' : 'Twitch Clip Downloader';
+    if (urlLabel) urlLabel.textContent = isKick ? 'Kick Clip URL' : 'Twitch Clip URL';
+    this.elUrlInput.placeholder = isKick ? 'https://kick.com/...' : 'https://clips.twitch.tv/...';
   }
 
   close() {
@@ -62,13 +74,19 @@ class TwitchModal {
     this.elBtnFetch.disabled = true;
     this.elBtnFetch.textContent = 'Fetching...';
 
+    const isKick = url.includes('kick.com');
+    this.currentService = isKick ? 'kick' : 'twitch';
+
     try {
-      const info = await window.electronAPI.twitchGetInfo(url);
+      const info = await (isKick 
+        ? window.electronAPI.kickGetInfo(url) 
+        : window.electronAPI.twitchGetInfo(url));
+      
       this.clipInfo = info;
       
       this.elThumb.src = info.thumbnail;
       this.elTitle.textContent = info.title;
-      this.elCreator.textContent = `Clip: ${info.slug}`;
+      this.elCreator.textContent = isKick ? `Kick Clip: ${info.slug}` : `Twitch Clip: ${info.slug}`;
       
       // Populate qualities
       this.elQualitySelect.innerHTML = info.qualities.map(q => 
@@ -89,23 +107,30 @@ class TwitchModal {
     if (!this.clipInfo || !this.downloadFolder) return;
 
     const selectedUrl = this.elQualitySelect.value;
-    const filename = `Twitch_${this.clipInfo.slug}_${Date.now()}.mp4`;
+    const prefix = this.currentService === 'kick' ? 'Kick' : 'Twitch';
+    const slug = (this.clipInfo.slug || 'clip').toString().replace(/[\s\n\r]/g, '_');
+    const filename = `${prefix}_${slug}_${Date.now()}.mp4`;
     
     this.downloading = true;
     this.elBtnDownload.disabled = true;
     this.elProgressWrap.style.display = 'flex';
 
-    window.electronAPI.onTwitchProgress(({ percent }) => {
-      this.elProgressFill.style.width = `${percent}%`;
-      this.elProgressPct.textContent = `${percent}%`;
-    });
+    if (this.currentService === 'kick') {
+      window.electronAPI.onKickProgress(({ percent }) => {
+        this.elProgressFill.style.width = `${percent}%`;
+        this.elProgressPct.textContent = `${percent}%`;
+      });
+    } else {
+      window.electronAPI.onTwitchProgress(({ percent }) => {
+        this.elProgressFill.style.width = `${percent}%`;
+        this.elProgressPct.textContent = `${percent}%`;
+      });
+    }
 
     try {
-      const downloadedPath = await window.electronAPI.twitchDownload({
-        url: selectedUrl,
-        folder: this.downloadFolder,
-        filename
-      });
+      const downloadedPath = await (this.currentService === 'kick'
+        ? window.electronAPI.kickDownload({ url: selectedUrl, folder: this.downloadFolder, filename })
+        : window.electronAPI.twitchDownload({ url: selectedUrl, folder: this.downloadFolder, filename }));
 
       this.downloading = false;
       this.close();
@@ -122,7 +147,8 @@ class TwitchModal {
   }
 
   _bindEvents() {
-    this.elBtnTwitch.addEventListener('click', () => this.open());
+    this.elBtnTwitch.addEventListener('click', () => this.open('twitch'));
+    document.getElementById('btn-kick')?.addEventListener('click', () => this.open('kick'));
     this.elClose.addEventListener('click', () => this.close());
     this.elOverlay.addEventListener('click', (e) => { if (e.target === this.elOverlay) this.close(); });
     

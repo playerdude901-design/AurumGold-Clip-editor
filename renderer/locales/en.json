@@ -41,5 +41,7 @@
   "fetch_info": "Fetch Info",
   "quality": "Quality",
   "download_folder": "Download Folder",
-  "download_edit": "Download & Edit"
+  "download_edit": "Download & Edit",
+  "kick_clip": "Kick Clip",
+  "circle": "Circle"
 }

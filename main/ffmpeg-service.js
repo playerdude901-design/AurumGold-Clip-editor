@@ -89,7 +89,22 @@ class FFmpegService {
         const pw = Math.round((cam.pw / 1080) * outW);
         const ph = Math.round((cam.ph / 1920) * outH);
 
-        videoFilters.push(`[0:v]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos[cam${i}]`);
+        if (cam.shape === 'circle') {
+          // Crop and scale, then apply an elliptical alpha mask via geq, then convert to rgba
+          videoFilters.push(`[0:v]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos,format=rgba[camraw${i}]`);
+          // geq lum replicates luma; alpha channel uses ellipse formula: (x-cx)^2/rx^2 + (y-cy)^2/ry^2 <= 1
+          const rx = pw / 2, ry = ph / 2;
+          videoFilters.push(
+            `[camraw${i}]geq=` +
+            `lum='p(X,Y)':` +
+            `cb='cb(X,Y)':` +
+            `cr='cr(X,Y)':` +
+            `a='if(lte(pow((X-${rx})/${rx}\\,2)+pow((Y-${ry})/${ry}\\,2)\\,1)\\,255\\,0)'` +
+            `[cam${i}]`
+          );
+        } else {
+          videoFilters.push(`[0:v]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos[cam${i}]`);
+        }
       });
 
       let lastInput = '[bg]';
@@ -97,7 +112,9 @@ class FFmpegService {
         const px = Math.round((cam.px / 1080) * outW);
         const py = Math.round((cam.py / 1920) * outH);
         const nextOutput = (i === n - 1) ? '[vout]' : `[v${i}]`;
-        videoFilters.push(`${lastInput}[cam${i}]overlay=${px}:${py}${nextOutput}`);
+        // For circle cameras, use overlay with alpha for transparency support
+        const overlayOptions = cam.shape === 'circle' ? `overlay=${px}:${py}:format=auto` : `overlay=${px}:${py}`;
+        videoFilters.push(`${lastInput}[cam${i}]${overlayOptions}${nextOutput}`);
         lastInput = `[v${i}]`;
       });
 

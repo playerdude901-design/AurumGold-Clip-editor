@@ -230,6 +230,13 @@ body {
 }
 .camera-card:hover { background: var(--bg-hover); }
 .camera-card.selected { border-color: var(--cam-color, var(--accent)); background: rgba(var(--cam-rgb,201,168,76),.07); }
+.camera-card.dragging {
+  opacity: 0.5;
+  border: 1px dashed var(--gold);
+}
+.camera-card.drag-over {
+  border-top: 2px solid var(--gold);
+}
 
 .cam-header {
   display: flex;
@@ -750,7 +757,22 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.tl-right { flex-shrink: 0; }
+.btn-tool svg { flex-shrink: 0; }
+.btn-icon-text {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  background: var(--gold);
+  color: var(--bg-deep);
+  border-radius: 4px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  line-height: 1;
+}
 .tl-vol-btn { color: var(--text-muted); }
 
 /* ── Export Modal ──────────────────────────────────────────────────────── */
