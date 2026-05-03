@@ -4,7 +4,7 @@
   # AurumGold
   ### Premium Vertical Video Editor for Content Creators
 
-  [![Version](https://img.shields.io/badge/version-1.0.3-gold.svg?style=for-the-badge&labelColor=1b1b1b)](https://github.com/playerdude901-design/AurumGold-Clip-editor)
+  [![Version](https://img.shields.io/badge/version-1.0.5-gold.svg?style=for-the-badge&labelColor=1b1b1b)](https://github.com/playerdude901-design/AurumGold-Clip-editor)
   [![Platform](https://img.shields.io/badge/platform-windows-gold.svg?style=for-the-badge&labelColor=1b1b1b)](https://github.com/playerdude901-design/AurumGold-Clip-editor)
   [![License](https://img.shields.io/badge/license-MIT-gold.svg?style=for-the-badge&labelColor=1b1b1b)](LICENSE)
 
