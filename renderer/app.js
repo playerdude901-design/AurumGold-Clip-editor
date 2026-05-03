@@ -55,6 +55,7 @@
   const sidebar       = new Sidebar(state);
   const exportModal   = new ExportModal(state);
   const twitchModal   = new TwitchModal(state);
+  const featuresModal = new FeaturesModal();
 
   // ── i18n Initialization ─────────────────────────────────────────────
   const btnEn = document.getElementById('btn-lang-en');
@@ -175,7 +176,7 @@
   // ── App version ────────────────────────────────────────────────────
   try {
     const ver = await window.electronAPI.getVersion();
-    document.getElementById('app-version').textContent = `v1.0.4`; 
+    document.getElementById('app-version').textContent = `v${ver}`; 
   } catch (_) {}
 
   // ── Session Restore ────────────────────────────────────────────────
@@ -198,5 +199,8 @@
       window.electronAPI.clearSession();
     }
   }
+
+  // ── Show Features Announcement ─────────────────────────────────────
+  featuresModal.checkAndShow();
 
 })();

@@ -43,5 +43,17 @@
   "download_folder": "Download Folder",
   "download_edit": "Download & Edit",
   "kick_clip": "Kick Clip",
-  "circle": "Circle"
+  "circle": "Circle",
+  "features_fixes": "Features & Fixes",
+  "whats_new": "What's New",
+  "improvements": "Improvements & Fixes",
+  "got_it": "Got it!",
+  "feat_window_title": "Features & Fixes Window",
+  "feat_window_desc": "Stay up to date with the latest improvements every time you launch AurumGold.",
+  "feat_shine_title": "Premium Gold Shine",
+  "feat_shine_desc": "Experience the new luxurious gold sweep animation on the Export button.",
+  "fix_kick_title": "Kick.com Stability",
+  "fix_kick_desc": "Enhanced connection handling for smoother clip metadata retrieval.",
+  "fix_performance_title": "Performance Boost",
+  "fix_performance_desc": "Optimized timeline rendering for high-resolution vertical previews."
 }

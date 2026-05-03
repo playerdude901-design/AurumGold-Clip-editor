@@ -43,5 +43,17 @@
   "download_folder": "Carpeta de descarga",
   "download_edit": "Descargar y Editar",
   "kick_clip": "Kick Clip",
-  "circle": "Círculo"
+  "circle": "Círculo",
+  "features_fixes": "Novedades y Arreglos",
+  "whats_new": "Novedades",
+  "improvements": "Mejoras y Arreglos",
+  "got_it": "¡Entendido!",
+  "feat_window_title": "Ventana de Novedades",
+  "feat_window_desc": "Mantente al día con las últimas mejoras cada vez que inicies AurumGold.",
+  "feat_shine_title": "Brillo Dorado Premium",
+  "feat_shine_desc": "Experimenta la nueva animación de brillo dorado en el botón de Exportar.",
+  "fix_kick_title": "Estabilidad en Kick.com",
+  "fix_kick_desc": "Mejora en la conexión para una obtención de clips más fluida.",
+  "fix_performance_title": "Aumento de Rendimiento",
+  "fix_performance_desc": "Optimización del renderizado de la línea de tiempo para previsualizaciones verticales."
 }
