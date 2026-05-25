@@ -59,5 +59,7 @@
   "feat_icon_title": "New App Icon",
   "feat_icon_desc": "We've updated AurumGold's icon for a more premium look.",
   "fix_github_title": "GitHub Release Fix",
-  "fix_github_desc": "Fixed an issue where the app icon was too small for the GitHub builder."
+  "fix_github_desc": "Fixed an issue where the app icon was too small for the GitHub builder.",
+  "fix_modal_title": "Features Modal Fix",
+  "fix_modal_desc": "Fixed an issue where the features modal wouldn't trigger correctly on updates."
 }

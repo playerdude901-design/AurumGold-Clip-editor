@@ -4,7 +4,7 @@
  */
 class FeaturesModal {
   constructor() {
-    this.currentVersion = '1.0.6';
+    this.currentVersion = '1.0.7';
     this.elOverlay = document.getElementById('features-overlay');
     this.elCloseBtn = document.getElementById('features-close');
     this.elGotItBtn = document.getElementById('btn-features-close');

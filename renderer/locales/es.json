@@ -59,5 +59,7 @@
   "feat_icon_title": "Nuevo Icono de la App",
   "feat_icon_desc": "Hemos actualizado el icono de AurumGold para un aspecto más premium.",
   "fix_github_title": "Arreglo de Release en GitHub",
-  "fix_github_desc": "Se solucionó un problema con el tamaño del icono en el compilador de GitHub."
+  "fix_github_desc": "Se solucionó un problema con el tamaño del icono en el compilador de GitHub.",
+  "fix_modal_title": "Arreglo de Ventana de Novedades",
+  "fix_modal_desc": "Se solucionó un problema donde la ventana de novedades no se mostraba automáticamente tras actualizar."
 }
