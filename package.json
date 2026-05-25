@@ -2,6 +2,7 @@
   "name": "aurum-gold",
   "version": "1.0.6",
   "description": "Premium vertical video editor for content creators",
+  "author": "playerdude901-design",
   "main": "main/main.js",
   "scripts": {
     "start": "electron .",
@@ -38,7 +39,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/image_new_icon.png",
+      "icon": "assets/image_new_icon_256.png",
       "artifactName": "${productName}_Setup_${version}.${ext}"
     },
     "nsis": {
