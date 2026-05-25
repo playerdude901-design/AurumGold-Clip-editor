@@ -55,5 +55,9 @@
   "fix_kick_title": "Kick.com Stability",
   "fix_kick_desc": "Enhanced connection handling for smoother clip metadata retrieval.",
   "fix_performance_title": "Performance Boost",
-  "fix_performance_desc": "Optimized timeline rendering for high-resolution vertical previews."
+  "fix_performance_desc": "Optimized timeline rendering for high-resolution vertical previews.",
+  "feat_icon_title": "New App Icon",
+  "feat_icon_desc": "We've updated AurumGold's icon for a more premium look.",
+  "fix_github_title": "GitHub Release Fix",
+  "fix_github_desc": "Fixed an issue where the app icon was too small for the GitHub builder."
 }

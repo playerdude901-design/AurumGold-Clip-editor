@@ -4,7 +4,7 @@
  */
 class FeaturesModal {
   constructor() {
-    this.currentVersion = '1.0.5';
+    this.currentVersion = '1.0.6';
     this.elOverlay = document.getElementById('features-overlay');
     this.elCloseBtn = document.getElementById('features-close');
     this.elGotItBtn = document.getElementById('btn-features-close');
@@ -21,12 +21,12 @@ class FeaturesModal {
   }
 
   async checkAndShow() {
-    // Show once per session
-    const shownThisSession = sessionStorage.getItem('aurum_features_shown');
+    // Show once per session per version
+    const shownThisSession = sessionStorage.getItem(`aurum_features_shown_${this.currentVersion}`);
     
     if (!shownThisSession) {
       this.open();
-      sessionStorage.setItem('aurum_features_shown', 'true');
+      sessionStorage.setItem(`aurum_features_shown_${this.currentVersion}`, 'true');
     }
   }
 

@@ -55,5 +55,9 @@
   "fix_kick_title": "Estabilidad en Kick.com",
   "fix_kick_desc": "Mejora en la conexión para una obtención de clips más fluida.",
   "fix_performance_title": "Aumento de Rendimiento",
-  "fix_performance_desc": "Optimización del renderizado de la línea de tiempo para previsualizaciones verticales."
+  "fix_performance_desc": "Optimización del renderizado de la línea de tiempo para previsualizaciones verticales.",
+  "feat_icon_title": "Nuevo Icono de la App",
+  "feat_icon_desc": "Hemos actualizado el icono de AurumGold para un aspecto más premium.",
+  "fix_github_title": "Arreglo de Release en GitHub",
+  "fix_github_desc": "Se solucionó un problema con el tamaño del icono en el compilador de GitHub."
 }
