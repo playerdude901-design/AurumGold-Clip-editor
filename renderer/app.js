@@ -75,6 +75,10 @@
   await window.i18n.setLocale(lang);
   updateLangUI(lang);
 
+  // ── Theme Initialization ─────────────────────────────────────────────
+  const themeManager = new ThemeManager();
+  await themeManager.init(settings.theme);
+
   // ── Canvas sizing ──────────────────────────────────────────────────
   function resizeCanvases() {
     // Source canvas: fill its wrapper
