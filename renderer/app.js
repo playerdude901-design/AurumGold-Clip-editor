@@ -17,24 +17,55 @@
     selectedCameraId:  null,
     trimIn:            0,
     trimOut:           0,
-    presets:           []
+    presets:           [],
+    // Subtitles & Layers state
+    subtitles:         [],
+    selectedSubtitleId: null,
+    subtitlesVisible:  true,
+    subtitlesLocked:   false,
+    subtitleStyle: {
+      animation: 'Pop In',
+      verticalPosition: 'bottom',
+      horizontalPosition: 'center',
+      fontName: 'Montserrat',
+      fontSize: 64,
+      textColor: '#FFFFFF',
+      outlineColor: '#000000',
+      outlineWidth: 4,
+      shadowColor: '#000000',
+      shadowWidth: 2,
+      highlightEnabled: true,
+      highlightColor: '#FFD700',
+      bgBox: false,
+      bgColor: '#000000',
+      bgOpacity: 0.6,
+      marginV: 120,
+      marginH: 60,
+      bold: true
+    }
   };
 
   // ── Persistence ────────────────────────────────────────────────────
+  let restoringSession = false;
   async function autoSave() {
+    if (restoringSession) return;
     if (!state.filePath) return;
     const session = {
+      tracks: timeline.trackManager.serialize(),
       filePath: state.filePath,
       trimIn:   state.trimIn,
       trimOut:  state.trimOut,
-      cameras:  state.cameras.map(c => ({ ...c }))
+      cameras:  state.cameras.map(c => ({ ...c })),
+      subtitles: state.subtitles ? state.subtitles.map(s => ({ ...s })) : [],
+      subtitleStyle: state.subtitleStyle ? { ...state.subtitleStyle } : undefined
     };
     await window.electronAPI.saveSession(session);
   }
 
-  EventBus.on('project:changed', () => autoSave());
-  EventBus.on('video:loaded',    () => autoSave());
-  EventBus.on('cameras:changed', () => EventBus.emit('project:changed'));
+  EventBus.on('project:changed',   () => autoSave());
+  EventBus.on('video:loaded',      () => autoSave());
+  EventBus.on('cameras:changed',   () => EventBus.emit('project:changed'));
+
   // We don't save on every timeupdate, but maybe on trim change
   // For now, components will emit project:changed when relevant.
 
@@ -51,11 +82,15 @@
   const previewCanvas = new PreviewCanvas(prvCanvasEl, state);
 
   // ── UI Components ──────────────────────────────────────────────────
-  const timeline      = new Timeline(state);
-  const sidebar       = new Sidebar(state);
-  const exportModal   = new ExportModal(state);
-  const twitchModal   = new TwitchModal(state);
-  const featuresModal = new FeaturesModal();
+  const timeline       = new Timeline(state);
+  const sidebar        = new Sidebar(state);
+  const subtitleEditor = new SubtitleEditor(state);
+  const exportModal    = new ExportModal(state, subtitleEditor);
+  const twitchModal    = new TwitchModal(state);
+  const featuresModal  = new FeaturesModal();
+  const monitors = new Monitors(state, timeline);
+  const history = new EditorHistory(state, timeline, sidebar);
+  state.timeline = timeline;
 
   // ── i18n Initialization ─────────────────────────────────────────────
   const btnEn = document.getElementById('btn-lang-en');
@@ -94,7 +129,7 @@
 
     // Preview canvas: always 9:16 inside its wrapper
     const prvRect = prvWrapper.getBoundingClientRect();
-    prvCanvasEl.height = Math.round(prvRect.height) || 640;
+    prvCanvasEl.height = Math.max(1, Math.round(Math.min(prvRect.height, prvRect.width * 16 / 9)));
     prvCanvasEl.width  = Math.round(prvCanvasEl.height * 9 / 16);
 
     document.getElementById('source-dim').textContent =
@@ -102,6 +137,8 @@
   }
 
   window.addEventListener('resize', resizeCanvases);
+  const canvasObserver = new ResizeObserver(resizeCanvases);
+  canvasObserver.observe(srcWrapper); canvasObserver.observe(prvWrapper);
   resizeCanvases();
 
   // Start render loops
@@ -128,15 +165,20 @@
     state.trimIn        = 0;
     state.trimOut       = duration;
     state.cameras       = [];
+    state.subtitles = [];
+    state.thumbnail = null;
     state.selectedCameraId = null;
 
+    document.getElementById('video-filename').removeAttribute('data-i18n');
     // Attach video to element
     const v = state.videoEl;
-    v.src = `file://${filePath.replace(/\\/g, '/')}`;
-    v.load();
-
-    await new Promise(resolve => {
-      v.addEventListener('loadedmetadata', resolve, { once: true });
+    v.src = encodeURI(`file:///${filePath.replace(/\\/g, '/')}`).replace(/#/g, '%23');
+    await new Promise((resolve,reject)=>{
+      const done=()=>{cleanup();resolve();};
+      const fail=()=>{cleanup();reject(new Error('No se puede reproducir este video.'));};
+      const timer=setTimeout(fail,20000);
+      const cleanup=()=>{clearTimeout(timer);v.removeEventListener('loadedmetadata',done);v.removeEventListener('error',fail);};
+      v.addEventListener('loadedmetadata',done);v.addEventListener('error',fail);v.load();
     });
 
     // Toolbar info
@@ -146,8 +188,13 @@
       `${width}×${height}  •  ${fps.toFixed(2)} fps  •  ${formatTime(duration)}`;
     document.getElementById('btn-export').disabled = false;
 
+    const btnTranscribe = document.getElementById('btn-transcribe-audio');
+    const btnSubStyles = document.getElementById('btn-open-sub-editor');
+    if (btnTranscribe) btnTranscribe.disabled = false;
+    if (btnSubStyles) btnSubStyles.disabled = false;
+
     // Wire time update
-    v.addEventListener('timeupdate', () => EventBus.emit('video:timeupdate'));
+    v.ontimeupdate = () => EventBus.emit('video:timeupdate');
     v.addEventListener('ended', () => { v.pause(); EventBus.emit('video:timeupdate'); });
 
     // Pause at start
@@ -162,10 +209,13 @@
 
     // Auto-add first camera covering full video
     sidebar.addCamera();
+    const thumb = () => { if(v.readyState<2)return; const c=document.createElement('canvas'); c.width=96;c.height=54;c.getContext('2d').drawImage(v,0,0,96,54);state.thumbnail=c.toDataURL();timeline.engine.render(); };
+    if(v.readyState>=2)thumb();else v.addEventListener('loadeddata',thumb,{once:true});
+    history.reset();
   }
 
   // Open button
-  document.getElementById('btn-open').addEventListener('click', () => openVideo());
+  document.getElementById('btn-open').addEventListener('click', () => openVideo().catch(e => alert(e.message)));
 
   // Keyboard shortcut Ctrl+O
   window.addEventListener('keydown', e => {
@@ -174,8 +224,30 @@
 
   // Listen for Twitch downloads
   EventBus.on('twitch:download-complete', (filePath) => {
-    openVideo(filePath);
+    openVideo(filePath).catch(e => alert(e.message));
   });
+
+  const transcription = new SubtitleTranscription(state, subtitleEditor);
+  const btnSubStyles = document.getElementById('btn-open-sub-editor');
+
+  function openSubtitleCustomizer() {
+    subtitleEditor.open(
+      state.subtitles,
+      ({ blocks, styleConfig }) => {
+        state.subtitles = blocks;
+        state.subtitleStyle = styleConfig;
+        EventBus.emit('subtitles:changed');
+        EventBus.emit('project:changed');
+      },
+      () => {}
+    );
+  }
+
+  if (btnSubStyles) {
+    btnSubStyles.addEventListener('click', () => openSubtitleCustomizer());
+  }
+
+  EventBus.on('subtitle:edit-requested', () => openSubtitleCustomizer());
 
   // ── App version ────────────────────────────────────────────────────
   try {
@@ -187,24 +259,32 @@
   const lastSession = await window.electronAPI.getSession();
   if (lastSession && lastSession.filePath) {
     try {
+      restoringSession = true;
       await openVideo(lastSession.filePath);
       state.trimIn  = lastSession.trimIn  || 0;
       state.trimOut = lastSession.trimOut || state.videoDuration;
       state.cameras = lastSession.cameras || [];
+      if (lastSession.subtitles) state.subtitles = lastSession.subtitles;
+      if (lastSession.subtitleStyle) state.subtitleStyle = lastSession.subtitleStyle;
       
       // Update UI
       if (state.cameras.length > 0) {
         state.selectedCameraId = state.cameras[0].id;
       }
-      sidebar.render();
+      if (lastSession.tracks) timeline.trackManager.restore(lastSession.tracks);
+      sidebar.renderCameras();
+      EventBus.emit('subtitles:changed');
       EventBus.emit('video:timeupdate'); // Refresh timeline UI
+      timeline.engine.render();
+      history.reset();
+      EventBus.emit('project:restored');
     } catch (e) {
       console.warn('Failed to restore session:', e);
       window.electronAPI.clearSession();
-    }
+    } finally { restoringSession = false; }
   }
 
   // ── Show Features Announcement ─────────────────────────────────────
-  featuresModal.checkAndShow();
+  // Release announcements remain accessible through the existing component.
 
 })();

@@ -13,11 +13,11 @@ function createWindow() {
     height: 900,
     minWidth: 1200,
     minHeight: 700,
-    backgroundColor: '#0d0d0f',
+    backgroundColor: '#1b1b1b',
     title: 'AurumGold',
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#141418',
+      color: '#1e1e1e',
       symbolColor: '#c9a84c',
       height: 36
     },

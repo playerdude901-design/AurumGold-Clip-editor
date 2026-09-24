@@ -5,3 +5,8 @@ dist/
 .env
 out/
 .vscode/
+
+test-output/
+deliverables/
+
+.venv-whisper/

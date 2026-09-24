@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  quitApp: () => ipcRenderer.send('app:quit'),
   // Video
   openVideo: (path) => ipcRenderer.invoke('video:open', path),
 
@@ -41,5 +42,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (s)        => ipcRenderer.invoke('settings:save', s),
   getSession:   ()         => ipcRenderer.invoke('session:get'),
   saveSession:  (s)        => ipcRenderer.invoke('session:save', s),
-  clearSession: ()         => ipcRenderer.invoke('session:clear')
+  clearSession: ()         => ipcRenderer.invoke('session:clear'),
+
+  // Subtitles
+  transcribeAudio: (params) => { console.log('[AG-Transcribe] paso 3: preload'); return ipcRenderer.invoke('subtitles:transcribe', params); },
+  generateAss:     (params) => ipcRenderer.invoke('subtitles:generateAss', params),
+  subtitleFonts:   () => ipcRenderer.invoke('subtitles:fonts'),
+
+  // Waveforms & Audio
+  generateWaveform: (params) => ipcRenderer.invoke('waveform:generate', params),
+  selectAudioFile:  ()       => ipcRenderer.invoke('audio:selectFile'),
+  probeAudio:       (path)   => ipcRenderer.invoke('audio:probe', path)
 });

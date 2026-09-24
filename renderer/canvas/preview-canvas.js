@@ -9,20 +9,20 @@ class PreviewCanvas {
     this.ctx    = canvasEl.getContext('2d');
     this.state  = state;
     this._raf   = null;
-    
+
     this._draggingCam = null;
     this._resizingCam = null;
     this._resizeDir   = ''; // 'tl', 'tr', 'bl', 'br'
     this._lastMouse   = { x: 0, y: 0 };
-    
+
     this._bindEvents();
   }
 
   _bindEvents() {
     this.canvas.addEventListener('mousedown', e => this._onMouseDown(e));
     window.addEventListener('mousemove', e => this._onMouseMove(e));
-    window.addEventListener('mouseup',   () => { 
-      this._draggingCam = null; 
+    window.addEventListener('mouseup',   () => {
+      this._draggingCam = null;
       this._resizingCam = null;
     });
   }
@@ -32,21 +32,21 @@ class PreviewCanvas {
     const rect = this.canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    
+
     // Convert mouse to preview space (e.g. 1080x1920)
     const px = (mx / rect.width) * 1080;
     const py = (my / rect.height) * 1920;
 
     // Check cameras from top to bottom (reverse array)
     const cameras = [...this.state.cameras].reverse();
-    
+
     for (const cam of cameras) {
       if (!cam.active) continue;
 
       // Check handles first
       const handleSize = 40;
       const h = handleSize;
-      
+
       // br handle
       if (px > cam.px + cam.pw - h && px < cam.px + cam.pw && py > cam.py + cam.ph - h && py < cam.py + cam.ph) {
         this._resizingCam = cam;
@@ -100,14 +100,14 @@ class PreviewCanvas {
       this._lastMouse = { x: e.clientX, y: e.clientY };
 
       const cam = this._resizingCam;
-      
+
       // Calculate new width with constraints
       const newPw = Math.max(40, Math.min(1080 - cam.px, cam.pw + dx));
-      
+
       if (cam.lockAR) {
         const ar = cam.w / cam.h;
         let newPh = newPw / ar;
-        
+
         // If height exceeds bottom, cap height and recalculate width
         if (cam.py + newPh > 1920) {
           newPh = 1920 - cam.py;
@@ -121,7 +121,7 @@ class PreviewCanvas {
         cam.pw = newPw;
         cam.ph = Math.max(40, Math.min(1920 - cam.py, cam.ph + dy));
       }
-      
+
       EventBus.emit('cameras:changed', this.state.cameras);
     } else if (this._draggingCam) {
       const dx = (e.clientX - this._lastMouse.x) * (1080 / rect.width);
@@ -130,7 +130,7 @@ class PreviewCanvas {
 
       this._draggingCam.px = Math.max(0, Math.min(1080 - this._draggingCam.pw, this._draggingCam.px + dx));
       this._draggingCam.py = Math.max(0, Math.min(1920 - this._draggingCam.ph, this._draggingCam.py + dy));
-      
+
       EventBus.emit('cameras:changed', this.state.cameras);
     }
   }
@@ -180,7 +180,7 @@ class PreviewCanvas {
         ctx.ellipse(dx + dw / 2, dy + dh / 2, dw / 2, dh / 2, 0, 0, Math.PI * 2);
         ctx.clip();
       }
-      ctx.drawImage(state.videoEl, sx, sy, sw, sh, dx, dy, dw, dh);
+      if (state.sequenceHasVideo !== false && state.videoEl.readyState >= 2) ctx.drawImage(state.videoEl, sx, sy, sw, sh, dx, dy, dw, dh);
       ctx.restore();
 
       // Selected highlight & handles
@@ -202,5 +202,17 @@ class PreviewCanvas {
       ctx.font        = 'bold 9px Inter, sans-serif';
       ctx.fillText(cam.label, dx + 8, dy + 14);
     });
+
+    // ── Overlay Subtitles Layer in real-time ──────────────────────────────
+    this._drawSubtitles(W, H);
+  }
+
+  _drawSubtitles(W, H) {
+    const {ctx,state}=this;
+    if(state.subtitlesVisible===false)return;
+    const time=state.sequenceTime ?? state.videoEl?.currentTime ?? 0;
+    for(const cue of state.subtitles || []) {
+      if(time>=cue.start && time<cue.end)SubtitleVisual.draw(ctx,cue,state.subtitleStyle,time,W,H);
+    }
   }
 }

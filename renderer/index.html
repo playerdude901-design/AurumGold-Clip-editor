@@ -9,16 +9,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="aurumgold-layout.css" />
+  <link rel="stylesheet" href="subtitle-styles.css" />
   <script>
     window.onerror = function(msg, url, line, col, error) {
       console.error("GLOBAL ERROR:", msg, "at", url, ":", line, ":", col);
       if (error && error.stack) console.error(error.stack);
-      alert("A critical error occurred: " + msg + "\nCheck console for details.");
+      document.getElementById('transcribe-status')?.replaceChildren(document.createTextNode('Error: '+msg));
       return false;
     };
     window.onunhandledrejection = function(event) {
       console.error("UNHANDLED REJECTION:", event.reason);
-      alert("A background task failed: " + event.reason);
+      document.getElementById('transcribe-status')?.replaceChildren(document.createTextNode('Error: '+event.reason));
     };
   </script>
 </head>
@@ -44,6 +46,22 @@
           <span class="btn-icon-text">K</span>
           Kick Clip
         </button>
+        <div class="toolbar-sep"></div>
+        <div class="toolbar-transcribe-box">
+          <select id="transcribe-lang-select" class="select-transcribe-lang" title="Transcription Language">
+            <option value="es" selected>🇪🇸 ES (Español)</option>
+            <option value="en">🇺🇸 EN (English)</option>
+            <option value="auto">🌐 Auto Detect</option>
+          </select>
+          <button class="btn-tool btn-tool-transcribe" id="btn-transcribe-audio" title="Transcribe Audio with Whisper" disabled>
+            <span class="sparkle-icon">✦</span>
+            Transcribir Subtítulos
+          </button>
+          <button class="btn-tool btn-tool-styles" id="btn-open-sub-editor" title="Open Subtitle Style Customizer" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Estilos
+          </button>
+        </div>
       </div>
       <div class="toolbar-center" id="video-filename" data-i18n="no_file_loaded">No file loaded</div>
       <div class="toolbar-right">
@@ -154,15 +172,42 @@
       </main>
     </div>
 
-    <!-- ── Timeline ────────────────────────────────────── -->
+    <!-- ── Timeline (Premiere Pro Style Multi-track NLE Layers) ──────────────── -->
     <footer class="timeline-area" id="timeline-area">
+      <!-- Top Resizing Handle -->
+      <div class="tl-resizer" id="tl-resizer" title="Drag vertically to resize timeline"></div>
+
+      <!-- Timeline Toolbar -->
       <div class="tl-controls">
-        <button class="tl-btn" id="tl-rewind" title="Rewind to start" data-i18n="rewind">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg>
+        <!-- Editing Tools -->
+        <div class="tl-tool-group">
+          <button class="tl-btn-tool active" id="tool-select" title="Selection Tool (V)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3l7.5 18 3.5-7.5 7.5-3.5L3 3z"/></svg>
+            <span class="tool-shortcut">V</span>
+          </button>
+          <button class="tl-btn-tool" id="tool-razor" title="Razor Cut Tool (C)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+            <span class="tool-shortcut">C</span>
+          </button>
+          <button class="tl-btn-tool" id="tool-hand" title="Hand Tool (H)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v7M10 10.5V6a2 2 0 0 0-4 0v8M10 18a6 6 0 0 1-6-6v-1a2 2 0 0 1 4 0v1a2 2 0 0 0 4 0v-4a2 2 0 0 1 4 0v5a5 5 0 0 1-5 5h-1z"/></svg>
+            <span class="tool-shortcut">H</span>
+          </button>
+          <button class="tl-btn-tool active" id="tool-snap" title="Magnetic Snap Toggle (S)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><line x1="4" y1="7" x2="8" y2="7"/><line x1="16" y1="7" x2="20" y2="7"/></svg>
+            <span class="tool-shortcut">S</span>
+          </button>
+        </div>
+
+        <div class="tl-divider-v"></div>
+
+        <!-- Playback Controls -->
+        <button class="tl-btn" id="tl-rewind" title="Rewind to In (Home)" data-i18n="rewind">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg>
         </button>
-        <button class="tl-btn tl-btn-play" id="tl-play" title="Play / Pause (Space)" data-i18n="play_pause">
-          <svg id="icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <svg id="icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        <button class="tl-btn tl-btn-play" id="tl-play" title="Play / Pause (Space / K)" data-i18n="play_pause">
+          <svg id="icon-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="icon-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
         </button>
         <div class="tl-time">
           <div class="tl-time-main">
@@ -171,42 +216,83 @@
             <span id="tl-duration">00:00:00:00</span>
           </div>
         </div>
+
+        <div class="tl-divider-v"></div>
+
+        <!-- Zoom Controls -->
         <div class="tl-zoom-group">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <button class="tl-btn-step" id="tl-zoom-out" title="Zoom Out (-)">−</button>
           <input type="range" id="tl-zoom" min="1" max="10" step="0.1" value="1" />
+          <button class="tl-btn-step" id="tl-zoom-in" title="Zoom In (+)">+</button>
+          <button class="tl-btn-fit" id="tl-zoom-fit" title="Fit Entire Timeline to Width">Fit</button>
+        </div>
+
+        <div class="tl-divider-v"></div>
+
+        <!-- Track & Asset Actions -->
+        <div class="tl-actions-layer">
+          <button class="tl-btn-pill" id="tl-btn-add-video-track" title="Add Video Track">
+            <span>+ V</span>
+          </button>
+          <button class="tl-btn-pill" id="tl-btn-add-audio-track" title="Add Audio Track">
+            <span>+ A</span>
+          </button>
+          <button class="tl-btn-pill" id="tl-btn-add-audio-file" title="Add external audio file">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            Audio
+          </button>
+          <button class="tl-btn-pill active" id="tl-btn-toggle-waveform" title="Toggle Audio Waveforms">
+            Wave
+          </button>
+          <button class="tl-btn-pill tl-pill-gold" id="tl-btn-add-sub-cue" title="Add subtitle block at playhead">
+            + Subtítulo
+          </button>
+          <button class="tl-btn-pill" id="tl-btn-edit-sub-styles" title="Subtitle Visual Customizer">
+            Estilos
+          </button>
         </div>
       </div>
 
-      <div class="tl-track-area">
-        <div class="tl-track-scroll" id="tl-scroll">
-        <div class="tl-track-inner" id="tl-inner">
-          <div class="tl-track" id="tl-track">
-            <div class="tl-shade tl-shade-left" id="tl-shade-left"></div>
-            <div class="tl-shade tl-shade-right" id="tl-shade-right"></div>
-            <div class="tl-marker tl-trim-in" id="tl-trim-in"><div class="tl-marker-label" id="tl-marker-in-label">In: 00:00</div></div>
-            <div class="tl-marker tl-trim-out" id="tl-trim-out"><div class="tl-marker-label" id="tl-marker-out-label">Out: 00:00</div></div>
-            <div class="tl-playhead" id="tl-playhead">
-              <div class="tl-playhead-head"></div>
-              <div class="tl-playhead-line"></div>
+      <!-- Premiere Pro Multi-track Area -->
+      <div class="tl-multi-track-wrapper">
+        <!-- Track Headers (Left Column ~160px Fixed) -->
+        <div class="tl-track-headers" id="tl-track-headers"></div>
+
+        <!-- Track Scroll (Right Content) -->
+        <div class="tl-track-area">
+          <!-- Time Ruler -->
+          <div class="tl-ruler" id="tl-ruler">
+            <div class="tl-ruler-ticks" id="tl-ruler-ticks"></div>
+            <div class="tl-markers-layer" id="tl-markers-layer"></div>
+          </div>
+
+          <!-- Scrollable Track Lanes -->
+          <div class="tl-track-scroll" id="tl-scroll">
+            <div class="tl-track-inner" id="tl-inner">
+              <div class="tl-track" id="tl-track">
+                <!-- Dynamically rendered by TimelineEngine (SUB, V1..Vn, A1..An) -->
+              </div>
+
+              <!-- Shared Overlays Across All Lanes -->
+              <div class="tl-shade tl-shade-left" id="tl-shade-left"></div>
+              <div class="tl-shade tl-shade-right" id="tl-shade-right"></div>
+              <div class="tl-marker tl-trim-in" id="tl-trim-in"><div class="tl-marker-label" id="tl-marker-in-label">[ In</div></div>
+              <div class="tl-marker tl-trim-out" id="tl-trim-out"><div class="tl-marker-label" id="tl-marker-out-label">Out ]</div></div>
+              <div class="tl-playhead" id="tl-playhead">
+                <div class="tl-playhead-head"></div>
+                <div class="tl-playhead-line"></div>
+              </div>
+              <div class="tl-marquee" id="tl-marquee" style="display:none"></div>
             </div>
-            <div class="tl-ticks" id="tl-ticks"></div>
-            <div class="tl-waveform" id="tl-waveform"></div>
           </div>
         </div>
-        </div>
-        <div class="tl-trim-times">
-          <span id="tl-time-start">00:00:00:00</span>
-          <span id="tl-in-label">In: 00:00:00</span>
-          <span id="tl-out-label">Out: 00:00:00</span>
-          <span id="tl-time-end">00:00:00:00</span>
-        </div>
       </div>
 
-      <div class="tl-right">
-        <button class="tl-btn tl-vol-btn" id="tl-mute" title="Mute" data-i18n="mute">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
-        </button>
-      </div>
+      <!-- Floating Tooltip -->
+      <div class="tl-clip-tooltip" id="tl-clip-tooltip" style="display:none"></div>
+
+      <!-- Floating Context Menu -->
+      <div class="tl-context-menu" id="tl-context-menu" style="display:none"></div>
     </footer>
 
 
@@ -252,6 +338,15 @@
         <div class="form-group">
           <label class="form-label" data-i18n="trim_range">Trim Range</label>
           <div class="trim-info" id="export-trim-info">Full video</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Subtitles</label>
+          <label class="toggle-switch-row">
+            <span class="toggle-switch-label">Burn Animated Subtitles</span>
+            <input type="checkbox" id="export-subtitles-toggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
         </div>
 
         <div class="form-group">
@@ -412,6 +507,70 @@
     </div>
   </div>
 
+  <!-- ── Transcribe Loading Modal ───────────────────── -->
+  <div class="modal-overlay" id="transcribe-overlay" style="display:none; z-index: 1200;">
+    <div class="modal modal-small modal-transcribe">
+      <div class="modal-body text-center">
+        <div class="transcribe-spinner"></div>
+        <h3 class="transcribe-title">Processing Audio</h3>
+        <p class="transcribe-msg" id="transcribe-msg">Transcribing audio with Whisper...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Subtitle Editor Modal ──────────────────────────── -->
+  <div class="modal-overlay" id="subtitle-editor-overlay" style="display:none; z-index: 1100;">
+    <div class="modal modal-sub-editor" id="subtitle-editor-modal">
+      <div class="modal-header">
+        <div class="modal-header-title-group">
+          <span class="sub-badge">AI MODULE</span>
+          <h2 class="modal-title">Animated Subtitle Editor</h2>
+        </div>
+        <button class="modal-close" id="sub-editor-close">✕</button>
+      </div>
+
+      <div class="modal-body sub-editor-layout">
+
+        <!-- 2a. Transcription Block List -->
+        <div class="sub-col sub-col-blocks">
+          <div class="sub-col-header">
+            <span class="sub-col-title">Transcription Blocks</span>
+            <button class="btn-small btn-gold-outline" id="sub-btn-add-block">+ Add Block</button>
+          </div>
+          <div class="sub-blocks-container" id="sub-block-list">
+            <!-- Dynamic blocks inserted here -->
+          </div>
+        </div>
+
+        <!-- Populated by SubtitleProperties; layout moves this host to the inspector. -->
+        <div class="sub-col sub-col-styles"></div>
+
+        <!-- 2c. Real-time 9:16 Preview -->
+        <div class="sub-col sub-col-preview">
+          <div class="sub-col-header">
+            <span class="sub-col-title">Live 9:16 Preview</span>
+            <button class="btn-small btn-gold-icon" id="sub-preview-play-btn" title="Replay Animation">▶ Replay</button>
+          </div>
+          <div class="sub-preview-wrapper">
+            <canvas id="sub-preview-canvas" width="270" height="480"></canvas>
+            <div class="sub-preview-badge">Live Subtitle Simulator</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button class="btn-cancel-export" id="sub-editor-cancel">Cancel</button>
+          <button class="btn-start-export" id="sub-editor-confirm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Apply & Proceed to Export
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Hidden video element -->
   <video id="video-el" preload="auto" style="display:none"></video>
 
@@ -421,12 +580,28 @@
   <script src="utils/format-time.js"></script>
   <script src="canvas/source-canvas.js"></script>
   <script src="canvas/preview-canvas.js"></script>
+  <script src="components/waveform-renderer.js"></script>
+  <script src="components/track-manager.js"></script>
+  <script src="components/layout.js"></script>
+  <script src="components/timeline-tracks.js"></script>
+  <script src="components/timeline-playhead.js"></script>
+  <script src="components/timeline-panel.js"></script>
+  <script src="components/waveform-cache.js"></script>
+  <script src="components/timeline-engine.js"></script>
   <script src="components/timeline.js"></script>
   <script src="components/sidebar.js"></script>
+  <script src="components/subtitle-style-model.js"></script>
+  <script src="components/subtitle-visual.js"></script>
+  <script src="components/subtitle-style-store.js"></script>
+  <script src="components/subtitle-properties.js"></script>
+  <script src="components/subtitle-editor.js"></script>
   <script src="components/export-modal.js"></script>
   <script src="components/twitch-modal.js"></script>
   <script src="components/features-modal.js"></script>
   <script src="components/theme-manager.js"></script>
+  <script src="components/monitors.js"></script>
+  <script src="components/subtitle-engine.js"></script>
+  <script src="components/history.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

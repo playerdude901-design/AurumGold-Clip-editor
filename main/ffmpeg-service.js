@@ -4,18 +4,43 @@ const ffprobeStatic = require('ffprobe-static');
 const fs            = require('fs');
 const path          = require('path');
 const os            = require('os');
+const {sequenceVideoFilters,audioSlices,tempoFilters}=require('./sequence-filters');
 
-// Resolve paths for both dev and asar-packed production
-function resolveBin(raw) {
-  // ffmpeg-static v5 returns a plain string; ffprobe-static returns { path }
-  if (raw && typeof raw === 'object' && raw.path) raw = raw.path;
-  if (typeof raw !== 'string') throw new Error('Could not resolve binary path');
-  return raw.replace(/app\.asar([/\\])/g, 'app.asar.unpacked$1');
+function resolveFfmpegPath() {
+  try {
+    let p = ffmpegStatic;
+    if (p && typeof p === 'object' && p.path) p = p.path;
+    if (typeof p === 'string') {
+      const unpacked = p.replace(/app\.asar([/\\])/g, 'app.asar.unpacked$1');
+      if (fs.existsSync(unpacked)) return unpacked;
+      if (fs.existsSync(p)) return p;
+    }
+  } catch (_) {}
+  const localNodeModules = path.join(__dirname, '../node_modules/ffmpeg-static/ffmpeg.exe');
+  if (fs.existsSync(localNodeModules)) return localNodeModules;
+  if (fs.existsSync('C:\\ffmpeg\\bin\\ffmpeg.exe')) return 'C:\\ffmpeg\\bin\\ffmpeg.exe';
+  return 'ffmpeg';
+}
+
+function resolveFfprobePath() {
+  try {
+    let p = ffprobeStatic;
+    if (p && typeof p === 'object' && p.path) p = p.path;
+    if (typeof p === 'string') {
+      const unpacked = p.replace(/app\.asar([/\\])/g, 'app.asar.unpacked$1');
+      if (fs.existsSync(unpacked)) return unpacked;
+      if (fs.existsSync(p)) return p;
+    }
+  } catch (_) {}
+  const localNodeModules = path.join(__dirname, '../node_modules/ffprobe-static/ffprobe.exe');
+  if (fs.existsSync(localNodeModules)) return localNodeModules;
+  if (fs.existsSync('C:\\ffmpeg\\bin\\ffprobe.exe')) return 'C:\\ffmpeg\\bin\\ffprobe.exe';
+  return 'ffprobe';
 }
 
 try {
-  ffmpeg.setFfmpegPath(resolveBin(ffmpegStatic));
-  ffmpeg.setFfprobePath(resolveBin(ffprobeStatic.path));
+  ffmpeg.setFfmpegPath(resolveFfmpegPath());
+  ffmpeg.setFfprobePath(resolveFfprobePath());
 } catch (e) {
   console.error('FFmpeg path resolution failed:', e.message);
 }
@@ -57,6 +82,14 @@ class FFmpegService {
     });
   }
 
+  getAudioMetadata(filePath) {
+    return new Promise((resolve,reject)=>ffmpeg.ffprobe(filePath,(error,meta)=>{
+      if(error)return reject(error);
+      if(!meta.streams.some(s=>s.codec_type==='audio'))return reject(new Error('No audio stream found'));
+      resolve({duration:Number(meta.format.duration) || 0});
+    }));
+  }
+
   cancelExport() {
     if (this.currentCmd) {
       this.currentCmd.kill('SIGKILL');
@@ -76,8 +109,14 @@ class FFmpegService {
 
       // 1. Build Video Filter Complex
       const videoFilters = [];
+      let sourceLabel = '0:v';
+      if(params.sequence) {
+        const plan=sequenceVideoFilters(params.sequence,params.videoWidth,params.videoHeight,fps || 30,trimIn,trimOut);
+        videoFilters.push(...plan.filters);sourceLabel=plan.label;
+      }
+      videoFilters.push('['+sourceLabel+']split='+n+active.map((_,i)=>'[source'+i+']').join(''));
       // Start with a black background with matching FPS
-      videoFilters.push(`color=c=black:s=${outW}x${outH}:d=1:r=${fps || 30}[bg]`);
+      videoFilters.push(`color=c=black:s=${outW}x${outH}:d=${trimOut-trimIn}:r=${fps || 30}[bg]`);
 
       active.forEach((cam, i) => {
         const x = Math.max(0, Math.round(cam.x));
@@ -91,7 +130,7 @@ class FFmpegService {
 
         if (cam.shape === 'circle') {
           // Crop and scale, then apply an elliptical alpha mask via geq, then convert to rgba
-          videoFilters.push(`[0:v]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos,format=rgba[camraw${i}]`);
+          videoFilters.push(`[source${i}]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos,format=rgba[camraw${i}]`);
           // geq lum replicates luma; alpha channel uses ellipse formula: (x-cx)^2/rx^2 + (y-cy)^2/ry^2 <= 1
           const rx = pw / 2, ry = ph / 2;
           videoFilters.push(
@@ -103,36 +142,57 @@ class FFmpegService {
             `[cam${i}]`
           );
         } else {
-          videoFilters.push(`[0:v]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos[cam${i}]`);
+          videoFilters.push(`[source${i}]crop=${w}:${ch}:${x}:${y},scale=${pw}:${ph}:flags=lanczos[cam${i}]`);
         }
       });
+
+      const hasSubtitles = Boolean(params.assPath && fs.existsSync(params.assPath));
 
       let lastInput = '[bg]';
       active.forEach((cam, i) => {
         const px = Math.round((cam.px / 1080) * outW);
         const py = Math.round((cam.py / 1920) * outH);
-        const nextOutput = (i === n - 1) ? '[vout]' : `[v${i}]`;
+        const isFinalOverlay = (i === n - 1);
+        const nextOutput = isFinalOverlay ? (hasSubtitles ? '[v_presub]' : '[vout]') : `[v${i}]`;
         // For circle cameras, use overlay with alpha for transparency support
         const overlayOptions = cam.shape === 'circle' ? `overlay=${px}:${py}:format=auto` : `overlay=${px}:${py}`;
         videoFilters.push(`${lastInput}[cam${i}]${overlayOptions}${nextOutput}`);
         lastInput = `[v${i}]`;
       });
 
-      let filterComplex = videoFilters.join(';');
+      if (hasSubtitles) {
+        const escapedAss = params.assPath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "\\'");
+        videoFilters.push(`[v_presub]subtitles='${escapedAss}'[vout]`);
+      }
+
+      const audioFilters = [];
+      const explicitAudio = Array.isArray(params.audioTracks);
+      const tracks = explicitAudio ? params.audioTracks : (hasAudio ? [{filePath,offset:0,trimIn:0,trimOut,volume:1}] : []);
+      const additionalAudioInputs = audioSlices(tracks,trimIn,trimOut);
+      additionalAudioInputs.forEach((clip,i)=>{
+        audioFilters.push('['+(i+1)+':a]asetpts=PTS-STARTPTS,'+tempoFilters(clip.speed)+',asetpts=N/SR/TB,volume='+(clip.volume ?? 1)+',adelay='+Math.round(clip.delay*1000)+':all=1[a'+i+']');
+      });
+      const hasActiveAudio = additionalAudioInputs.length>0;
+      const hasMultiAudio = hasActiveAudio;
+      if(hasActiveAudio)audioFilters.push(additionalAudioInputs.map((_,i)=>'[a'+i+']').join('')+'amix=inputs='+additionalAudioInputs.length+':duration=longest:normalize=0,asetpts=N/SR/TB,apad=whole_dur='+(trimOut-trimIn)+',atrim=duration='+(trimOut-trimIn)+'[aout]');
+
+      const allFilters = [...videoFilters, ...audioFilters];
+      let filterComplex = allFilters.join(';');
 
       const duration = trimOut - trimIn;
       const ss = Number(trimIn)  || 0;
       const t  = Number(duration) || 0;
 
       const mapOpts = [
+        '-filter_complex_threads 1',
         '-map [vout]',
-        hasAudio ? '-map 0:a?' : null,
+        hasActiveAudio ? (hasMultiAudio && audioFilters.length > 0 ? '-map [aout]' : '-map 0:a?') : null,
         '-c:v libx264',
         '-crf 18',
         '-preset fast',
         '-pix_fmt yuv420p',
-        hasAudio ? '-c:a aac' : null,
-        hasAudio ? '-b:a 192k' : null,
+        hasActiveAudio ? '-c:a aac' : null,
+        hasActiveAudio ? '-b:a 192k' : null,
         '-r', String(fps || 30),
         '-movflags +faststart'
       ].filter(Boolean);
@@ -141,30 +201,47 @@ class FFmpegService {
 
       let cmd = ffmpeg(filePath);
       if (useGPU) cmd.inputOptions('-hwaccel', 'd3d11va');
-      cmd.inputOptions(['-ss', String(ss), '-t', String(t)]);
+      if(!params.sequence)cmd.inputOptions(['-ss', String(ss), '-t', String(t)]);
+      cmd.outputOptions(['-t',String(t)]);
+
+      // Add external audio inputs with their trimmed duration
+      additionalAudioInputs.forEach(ext => {
+        const extSS = ext.sourceStart;
+        const extDur = ext.sourceDuration;
+        cmd.input(ext.filePath).inputOptions(['-ss', String(extSS), '-t', String(extDur)]);
+      });
 
       cmd.complexFilter(filterComplex)
          .outputOptions(mapOpts)
          .output(outputPath);
 
+      if(process.env.AG_DEBUG_FFMPEG)cmd.on('stderr',line=>console.log(line));
       cmd.on('progress', (info) => {
         if (info.percent != null) onProgress(Math.min(99, Math.round(info.percent)));
       });
 
+      const cleanupAss = () => {
+        if (params.assPath && fs.existsSync(params.assPath)) {
+          try { fs.unlinkSync(params.assPath); } catch (_) {}
+        }
+      };
+
       cmd.on('end', () => {
         this.currentCmd = null;
+        cleanupAss();
         onProgress(100);
         resolve();
       });
 
       cmd.on('error', (err) => {
         this.currentCmd = null;
-        if (err.message.includes('SIGKILL')) return reject(new Error('CANCELLED'));
+        if (err.message.includes('SIGKILL')) { cleanupAss(); return reject(new Error('CANCELLED')); }
         // Retry without GPU if hwaccel failed
         if (useGPU && err.message.includes('d3d11va')) {
           params.useGPU = false;
           return this.exportVideo(params, onProgress).then(resolve).catch(reject);
         }
+        cleanupAss();
         reject(err);
       });
 
